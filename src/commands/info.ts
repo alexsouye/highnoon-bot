@@ -11,7 +11,7 @@ export abstract class InfoCommand {
         "High Noon BOT",
         bot.user?.displayAvatarURL()
       )
-      .setFooter("Fait avec ❤ par Alexsouye v2.0.0-beta")
+      .setFooter("Fait avec ❤ par Alexsouye v2.0.1")
       .setDescription(
         "Bot discord du groupe de potes High Noon",
       )

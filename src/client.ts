@@ -34,14 +34,14 @@ client.once("ready", async () => {
   await client.initApplicationPermissions(true)
 
   console.log("HN Bot started ✅")
-});
+})
 
 client.on("interactionCreate", (interaction: Interaction) => {
   client.executeInteraction(interaction);
-});
+})
 
 client.on("messageCreate", (message: Message) => {
   client.executeCommand(message)
 })
 
-client.login(process.env.DISCORD_TOKEN ?? "")
+client.login(process.env.TOKEN ?? "")
