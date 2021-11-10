@@ -1,4 +1,4 @@
-# Base Image
+# Base Image, debian or raspbian/stretch for raspberry pi
 FROM debian
 
 # Labels
