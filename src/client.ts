@@ -2,6 +2,8 @@ import "reflect-metadata"
 import path from "path"
 import { Intents, Interaction, Message } from "discord.js"
 import { Client } from "discordx"
+const dotenv = require("dotenv")
+dotenv.config()
 
 const client = new Client({
   simpleCommand: {
@@ -40,6 +42,6 @@ client.on("interactionCreate", (interaction: Interaction) => {
 
 client.on("messageCreate", (message: Message) => {
   client.executeCommand(message)
-});
+})
 
-client.login('NzA4NzYwNDY1OTk5NzkwMjQ0.XrcCnw.SmqCuOImBuakjmbXs-JFwyuoYUg')
+client.login(process.env.DISCORD_TOKEN ?? "")
