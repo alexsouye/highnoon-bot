@@ -20,7 +20,6 @@ const client = new Client({
     path.join(__dirname, "events", "**/*.{ts,js}"),
   ],
   botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
-  silent: true,
 })
 
 client.once("ready", async () => {

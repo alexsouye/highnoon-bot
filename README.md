@@ -4,3 +4,11 @@
 
 ✨ Réalisé en TypeScript par Alexsouye ✨\
 HN Bot est un petit bot discord intégrant le nouveau système de slash commands
+
+Docker rebuild + push image :
+docker rmi id
+docker build ......
+docker push
+
+docker pull
+docker run
