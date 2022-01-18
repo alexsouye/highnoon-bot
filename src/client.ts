@@ -1,8 +1,9 @@
 import "reflect-metadata"
-import path from "path"
+import dotenv from 'dotenv'
 import { Intents, Interaction, Message } from "discord.js"
+import { dirname, importx } from "@discordx/importer";
 import { Client } from "discordx"
-const dotenv = require("dotenv")
+
 dotenv.config()
 
 const client = new Client({
@@ -14,10 +15,6 @@ const client = new Client({
     Intents.FLAGS.GUILD_MESSAGES,
     Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
     Intents.FLAGS.GUILD_VOICE_STATES,
-  ],
-  classes: [
-    path.join(__dirname, "commands", "**/*.{ts,js}"),
-    path.join(__dirname, "events", "**/*.{ts,js}"),
   ],
   botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
 })
@@ -43,4 +40,18 @@ client.on("messageCreate", (message: Message) => {
   client.executeCommand(message)
 })
 
-client.login(process.env.TOKEN ?? "")
+async function run() {
+  await importx(
+    dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}"
+  )
+
+  if (!process.env.TOKEN) {
+    throw Error("Could not find TOKEN in your environment");
+  }
+
+  await client.login(process.env.TOKEN)
+
+}
+
+run()
+

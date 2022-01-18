@@ -1,13 +1,13 @@
 import { CommandInteraction, MessageEmbed, Client } from "discord.js"
 import { Discord, Slash, SlashOption } from "discordx"
-import { Pagination } from "@discordx/utilities"
+import { Pagination } from "@discordx/pagination"
 import axios from 'axios'
 
 @Discord()
 export abstract class R34Command {
   @Slash("r34", { description: "NSFW, moteur de recherche r34", })
   async r34(
-    @SlashOption('recherche', { description: "Mot clé", required: true, type: 'STRING' })
+    @SlashOption('recherche', { description: "Mot clé", type: 'STRING' })
     @SlashOption('limite', { description: "Limite le nombre de résultats a afficher (exemple: 2)", required: false, type: 'NUMBER' })
     recherche: string,
     limite: number,
@@ -39,12 +39,13 @@ export abstract class R34Command {
           }
         }
       })
-    const pages = r34.map((page) => {
+    const pages = r34.map((page, index) => {
       const {
         footer,
         url,
         tags,
       } = page
+
       return new MessageEmbed()
         .setTitle(`Résultats pour ${recherche}`)
         .setURL(url)
@@ -54,7 +55,7 @@ export abstract class R34Command {
         .addField('tags associés', tags)
     })
 
-    const pagination = new Pagination(interaction, pages, { type: 'BUTTON' })
+    const pagination = new Pagination(interaction, pages, { type: 'BUTTON', showStartEnd: false })
     await pagination.send()
   }
 }
