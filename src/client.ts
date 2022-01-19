@@ -20,6 +20,9 @@ const client = new Client({
 })
 
 client.once("ready", async () => {
+  // make sure all guilds are in cache
+  await client.guilds.fetch()
+
   // init all applicaiton commands
   await client.initApplicationCommands({
     guild: { log: true },
