@@ -12,6 +12,6 @@ export abstract class PingCommand {
         `Pong 🏓! ${Math.round(bot.ws.ping)} ms`,
       )
 
-    return interaction.reply({ embeds: [embedMessage] })
+    return interaction.reply({ embeds: [embedMessage], ephemeral: true })
   }
 }
