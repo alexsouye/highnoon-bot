@@ -39,7 +39,7 @@ export abstract class R34Command {
           }
         }
       })
-    const pages = r34.map((page, index) => {
+    const pages = r34.map((page) => {
       const {
         footer,
         url,
