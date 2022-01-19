@@ -41,16 +41,16 @@ client.on("messageCreate", (message: Message) => {
 })
 
 async function run() {
+  // automatically import all commands files from src/commands directory
   await importx(
     dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}"
   )
 
   if (!process.env.TOKEN) {
-    throw Error("Could not find TOKEN in your environment");
+    throw Error("Could not find TOKEN in your environment variables");
   }
 
   await client.login(process.env.TOKEN)
-
 }
 
 run()
