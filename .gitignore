@@ -1,5 +1,6 @@
 build
 node_modules
+usefull.md
 yarn.lock
 .env
 .env.production

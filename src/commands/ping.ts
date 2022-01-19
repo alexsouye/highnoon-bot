@@ -9,7 +9,7 @@ export abstract class PingCommand {
       .setColor("PURPLE")
       .setTitle("Ping du bot")
       .setDescription(
-        `Pong ! ${Math.round(bot.ws.ping)} ms`,
+        `Pong 🏓! ${Math.round(bot.ws.ping)} ms`,
       )
 
     return interaction.reply({ embeds: [embedMessage] })
