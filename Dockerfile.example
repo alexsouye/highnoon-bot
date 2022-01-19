@@ -1,18 +1,8 @@
-# Base Image, debian or raspbian/stretch for raspberry pi
-FROM debian
+FROM node
 
 # Labels
 LABEL maintainer="Alexsouye, <buissonalexandre16@gmail.com>"
 LABEL version="2.0.1"
-
-# Update and download linux dependencies
-RUN apt-get update && apt-get install -y curl software-properties-common git make python gcc g++
-
-# Add NodeJS PPA
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
-
-# Install NodeJS
-RUN apt-get install -y nodejs && apt-get clean
 
 # Set environment variables
 ENV TOKEN=
@@ -21,22 +11,17 @@ ENV PORT=8080
 # Reserve ports
 EXPOSE 8080
 
-# Set workdir
-WORKDIR /app
+# Create app directory
+WORKDIR /usr/src/app
 
-# Copy required files
-ADD tsconfig.json . 
-ADD package.json .
-ADD src src
+# Move all files
+COPY . /usr/src/app/
 
-# Download dependencies
-RUN npm i
+# RUN npm install
+RUN npm install
 
-# Build bot
+# Build project
 RUN npm run build
 
-# Remove useless folders
-RUN rm -r src
-
-# Set container command
-CMD [ "npm", "run", "start" ]
+# Start bot
+CMD [ "node", "build/client.js" ]
