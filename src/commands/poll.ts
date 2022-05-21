@@ -7,6 +7,7 @@ import {
 } from "discord.js";
 import { Discord, Slash, SlashOption } from "discordx";
 import db from "quick.db";
+import { randomUUID } from "crypto";
 
 @Discord()
 export abstract class PollCommand {
@@ -60,6 +61,7 @@ export abstract class PollCommand {
     const time = duree < 1 ? 1 : duree > 60 * 24 * 7 ? 60 * 24 * 7 : duree;
 
     const poll: any = {
+      id: randomUUID(),
       question,
       choix1,
       choix1_votes: 0,
@@ -82,7 +84,9 @@ export abstract class PollCommand {
         components.push(
           new MessageActionRow().addComponents(
             new MessageButton()
-              .setLabel(`${poll[`choix${i}`]} (${poll[`choix${i}_votes`]} vote)`)
+              .setLabel(
+                `${poll[`choix${i}`]} (${poll[`choix${i}_votes`]} vote)`
+              )
               .setStyle("PRIMARY")
               .setCustomId(`choix${i}`)
           )
@@ -101,7 +105,7 @@ export abstract class PollCommand {
       ],
       components: components,
     });
-    await db.set(`polls.p${message.id}`, poll);
+    await db.set(`polls.p${poll.id}`, poll);
     interaction.reply({
       content: `Le sondage :\nhttps://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`,
       ephemeral: true,
@@ -110,30 +114,32 @@ export abstract class PollCommand {
     // Create thread
     message
       .startThread({
-        name: `[Sondage] ${poll.question.substring(
-          0,
-          20
-        )}`,
+        name: `[Sondage] ${poll.question.substring(0, 20)}`,
       })
       .then(async (thread: any) => {
         thread.send(`${interaction.user}`).then((m: any) => m.delete());
         thread.send(
           `Voter ici:\nhttps://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`
         );
-        let newComponents: any = []
-        let numArray: any = []
+        let newComponents: any = [];
+        let pollOptions: any = [];
         setTimeout(async () => {
-          const pollResults = await db.get(`polls.p${message.id}`);
-          const {
-            members,
-          } = pollResults
+          const pollResults = await db.get(`polls.p${poll.id}`);
+          const { members } = pollResults;
           for (let i = 1; i <= 5; i++) {
             if (poll[`choix${i}`] !== undefined) {
-              numArray.push(db.get(`polls.p${message.id}.choix${i}_votes`))
+              pollOptions.push({
+                label: `${poll[`choix${i}`]}`,
+                value: db.get(`polls.p${poll.id}.choix${i}_votes`),
+              });
               newComponents.push(
                 new MessageActionRow().addComponents(
                   new MessageButton()
-                    .setLabel(`${poll[`choix${i}`]} (${await db.get(`polls.p${message.id}.choix${i}_votes`)} vote${members.length > 1 ? 's' : ''})`)
+                    .setLabel(
+                      `${poll[`choix${i}`]} (${await db.get(
+                        `polls.p${poll.id}.choix${i}_votes`
+                      )} vote${members.length > 1 ? "s" : ""})`
+                    )
                     .setStyle("PRIMARY")
                     .setCustomId(`choix${i}`)
                     .setDisabled(true)
@@ -141,30 +147,43 @@ export abstract class PollCommand {
               );
             }
           }
-          const highestToLowest = numArray.sort((a: number, b: number) => b - a)
+          const highestToLowest = pollOptions.sort(
+            (a: any, b: any) => b.value - a.value
+          );
           message.edit({
             embeds: [
               new MessageEmbed()
-                .setTitle('Résultat du sondage')
-                .setDescription(
-                  `${poll.question}`
-                )
+                .setTitle("Résultat du sondage")
+                .setDescription(`${poll.question}`)
                 .addFields(
-                  highestToLowest.map((num: number, index: number) => {
+                  highestToLowest.map((option: any, index: number) => {
                     return {
-                      name: `Choix n° ${index + 1} : ${poll[`choix${index + 1}`]} ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : ''}`,
-                      value: `avec ${num} vote${members.length > 1 ? 's' : ''} / ${members.length}`,
-                    }
+                      name: `${
+                        index === 0
+                          ? "🥇"
+                          : index === 1
+                          ? "🥈"
+                          : index === 2
+                          ? "🥉"
+                          : ""
+                      } ${option.label}`,
+                      value: `avec ${option.value} vote${
+                        option.value > 1 ? "s" : ""
+                      } / ${members.length}`,
+                    };
                   })
-                )
+                ),
             ],
             components: newComponents,
-          })
-          thread.send(`Le sondage est terminé ! (le canal va être archivé dans 5 minutes)`)
+          });
+          thread.send(
+            `Le sondage est terminé (le canal va être archivé automatiquement) ! Voici les résultats:\nhttps://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`
+          );
+          client.off("interactionCreate", listener);
           setTimeout(() => {
-            thread.setArchived(true)
-          }, 5 * 60000)
-        }, duree * 60000)
+            thread.setArchived(true);
+          }, 60000);
+        }, duree * 60000);
       });
     // Create event
     if (time > 1)
@@ -182,9 +201,9 @@ export abstract class PollCommand {
       });
 
     // Collect
-    client.on('interactionCreate', async (interaction) => {
+    const listener = async (interaction: any) => {
       if (interaction.isButton()) {
-        const pollResults = await db.get(`polls.p${message.id}`);
+        const pollResults = await db.get(`polls.p${poll.id}`);
         const {
           choix1_votes,
           choix2_votes,
@@ -192,38 +211,68 @@ export abstract class PollCommand {
           choix4_votes,
           choix5_votes,
           members,
-        } = pollResults
+        } = pollResults;
         if (!members.includes(interaction.user.id)) {
           switch (interaction.customId) {
-            case 'choix1':
-              await db.set(`polls.p${message.id}`, { ...pollResults, choix1_votes: choix1_votes + 1, members: [...members, interaction.user.id] });
-              const newChoix1 = await db.get(`polls.p${message.id}.choix1_votes`);
-              interaction.component.label = `${poll.choix1} (${newChoix1} ${newChoix1 === 1 ? 'vote' : 'votes'})`;
+            case "choix1":
+              await db.set(`polls.p${poll.id}`, {
+                ...pollResults,
+                choix1_votes: choix1_votes + 1,
+                members: [...members, interaction.user.id],
+              });
+              const newChoix1 = await db.get(`polls.p${poll.id}.choix1_votes`);
+              interaction.component.label = `${poll.choix1} (${newChoix1} ${
+                newChoix1 === 1 ? "vote" : "votes"
+              })`;
               break;
-            case 'choix2':
-              await db.set(`polls.p${message.id}`, { ...pollResults, choix2_votes: choix2_votes + 1, members: [...members, interaction.user.id] });
-              const newChoix2 = await db.get(`polls.p${message.id}.choix2_votes`);
-              interaction.component.label = `${poll.choix2} (${newChoix2} ${newChoix2 === 1 ? 'vote' : 'votes'})`;
+            case "choix2":
+              await db.set(`polls.p${poll.id}`, {
+                ...pollResults,
+                choix2_votes: choix2_votes + 1,
+                members: [...members, interaction.user.id],
+              });
+              const newChoix2 = await db.get(`polls.p${poll.id}.choix2_votes`);
+              interaction.component.label = `${poll.choix2} (${newChoix2} ${
+                newChoix2 === 1 ? "vote" : "votes"
+              })`;
               break;
-            case 'choix3':
-              await db.set(`polls.p${message.id}`, { ...pollResults, choix3_votes: choix3_votes + 1, members: [...members, interaction.user.id] });
-              const newChoix3 = await db.get(`polls.p${message.id}.choix3_votes`);
-              interaction.component.label = `${poll.choix3} (${newChoix3} ${newChoix3 === 1 ? 'vote' : 'votes'})`;
+            case "choix3":
+              await db.set(`polls.p${poll.id}`, {
+                ...pollResults,
+                choix3_votes: choix3_votes + 1,
+                members: [...members, interaction.user.id],
+              });
+              const newChoix3 = await db.get(`polls.p${poll.id}.choix3_votes`);
+              interaction.component.label = `${poll.choix3} (${newChoix3} ${
+                newChoix3 === 1 ? "vote" : "votes"
+              })`;
               break;
-            case 'choix4':
-              await db.set(`polls.p${message.id}`, { ...pollResults, choix4_votes: choix4_votes + 1, members: [...members, interaction.user.id] });
-              const newChoix4 = await db.get(`polls.p${message.id}.choix4_votes`);
-              interaction.component.label = `${poll.choix4} (${newChoix4} ${newChoix4 === 1 ? 'vote' : 'votes'})`;
+            case "choix4":
+              await db.set(`polls.p${poll.id}`, {
+                ...pollResults,
+                choix4_votes: choix4_votes + 1,
+                members: [...members, interaction.user.id],
+              });
+              const newChoix4 = await db.get(`polls.p${poll.id}.choix4_votes`);
+              interaction.component.label = `${poll.choix4} (${newChoix4} ${
+                newChoix4 === 1 ? "vote" : "votes"
+              })`;
               break;
-            case 'choix5':
-              await db.set(`polls.p${message.id}`, { ...pollResults, choix5_votes: choix5_votes + 1, members: [...members, interaction.user.id] });
-              const newChoix5 = await db.get(`polls.p${message.id}.choix5_votes`);
-              interaction.component.label = `${poll.choix5} (${newChoix5} ${newChoix5 === 1 ? 'vote' : 'votes'})`;
+            case "choix5":
+              await db.set(`polls.p${poll.id}`, {
+                ...pollResults,
+                choix5_votes: choix5_votes + 1,
+                members: [...members, interaction.user.id],
+              });
+              const newChoix5 = await db.get(`polls.p${poll.id}.choix5_votes`);
+              interaction.component.label = `${poll.choix5} (${newChoix5} ${
+                newChoix5 === 1 ? "vote" : "votes"
+              })`;
               break;
           }
           await interaction.update({
             components: message.components,
-          })
+          });
         } else {
           interaction.reply({
             content: `Vous avez déjà voté !`,
@@ -231,7 +280,8 @@ export abstract class PollCommand {
           });
         }
       }
-    })
+    };
 
+    client.on("interactionCreate", listener);
   }
 }
