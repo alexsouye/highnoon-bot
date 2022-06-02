@@ -37,7 +37,9 @@ export abstract class buttons {
     interaction: SelectMenuInteraction,
     client: Client
   ): Promise<unknown> {
+    // Fetch discord guild to apply role menu selection
     const guild = await client.guilds.fetch("981569920385040405");
+    // Find user member in guild to apply role
     const member = guild.members.cache.get(interaction.user.id);
 
     await interaction.deferReply();
@@ -57,26 +59,29 @@ export abstract class buttons {
     // Check if the user already has a color
     if (userColor) {
       const { selectedColor } = userColor;
-      const precedentRole: any = guild.roles.cache.find(
+      const lastRole: any = guild.roles.cache.find(
         (r) => r.name === selectedColor
       );
-      await member?.roles.remove(precedentRole);
+      // Remove the last color role from the user and database
+      await member?.roles.remove(lastRole);
       await db.delete(`colors.hn${interaction.user.id}`);
+      // Add the new color role to the user and database
       await member?.roles.add(role);
       await db.set(`colors.hn${interaction.user.id}`, {
         selectedColor: roleValue,
       });
     } else {
+      // If the user doesn't have a color, add the new color role to the user and database
       await member?.roles.add(role);
       await db.set(`colors.hn${interaction.user.id}`, {
         selectedColor: roleValue,
       });
     }
 
+    // Send a message to the user with the selected color
     await interaction.followUp({
-      content: `Tu as sélectionné la couleur : ${
-        roles.find((r) => r.value === roleValue)?.label
-      }`,
+      content: `Tu as sélectionné la couleur : ${roles.find((r) => r.value === roleValue)?.label
+        }`,
       ephemeral: true,
     });
     return;
