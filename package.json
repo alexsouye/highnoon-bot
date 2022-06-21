@@ -44,7 +44,7 @@
     "better-sqlite3": "^7.5.3",
     "discord.js": "^13.3.1",
     "discordx": "^9.0.1",
-    "dotenv": "^10.0.0",
+    "dotenv": "^16.0.1",
     "quick.db": "^9.0.3",
     "reflect-metadata": "^0.1.13",
     "ts-node": "^10.4.0"
