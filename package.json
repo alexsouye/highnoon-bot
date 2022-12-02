@@ -39,7 +39,7 @@
   "dependencies": {
     "@discordx/importer": "^1.1.2",
     "@discordx/pagination": "^2.2.2",
-    "@discordx/utilities": "^4.3.3",
+    "@discordx/utilities": "^5.2.0",
     "axios": "^0.27.2",
     "better-sqlite3": "^7.5.3",
     "discord.js": "^13.3.1",
